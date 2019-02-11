@@ -1,21 +1,12 @@
+import numpy as np
+import progressbar
 import torch
-import torch.autograd as autograd
 import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-import torchvision
 from PIL import Image
-from matplotlib import patches
-from numpy import float32
-from torch.optim import lr_scheduler
 from torch.utils.data import Dataset
 from torchvision import transforms, models
-import matplotlib.pyplot as plt
-import numpy as np
 
 import data.utils as Utils
-
-import progressbar
 
 BATCH_SIZE = 32
 

@@ -1,16 +1,17 @@
+import matplotlib.pyplot as plt
+import numpy as np
 import torch
 from PIL import Image
 from matplotlib import patches
-from progressbar import progressbar
 from torch.utils.data import Dataset
 from torchvision.transforms import transforms
-import matplotlib.pyplot as plt
-import numpy as np
-import data.utils as Util
-import torch.nn as nn
 
-model = torch.load('model.pt')
-print(model)
+import data.utils as Util
+
+
+def load_model():
+    model = torch.load('model.pt')
+    return model
 
 
 class ILOTestDataset(Dataset):
@@ -41,32 +42,33 @@ class ILOTestDataset(Dataset):
 def test_single_image():
     # 88.81446   60.741096 157.93982  257.19263
     # 114.18105 57.434986 259.98145 270.80618
-    #137.60233 71.958336 242.84622 280.39297
+    # 137.60233 71.958336 242.84622 280.39297
     with open('./data/test_images.txt') as f:
-        test_image_path = [l.trim() for l in f.read().splitlines()]
+        test_image_path = [l.strip() for l in f.read().splitlines()]
     with open('./data/test_boxes.txt') as f:
-        test_image_box = [l.trim() for l in f.read().splitlines()]
+        test_image_box = [l.strip() for l in f.read().splitlines()]
 
-    if len(test_image_box) == len(test_image_path):
-        for i in range(10):
+    fig = plt.figure()
 
-            fig, ax = plt.subplots(1)
-            im = Image.open('./data/images/' + test_image_path[i]).convert('RGB')
-            ts = transforms.Compose([
-                # transforms.Scale((224, 224)),
-                transforms.ToTensor(),
-                # transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    for i in range(10):
+        # fig, ax = plt.subplots(1)
+        im = Image.open('./data/images/' + test_image_path[i]).convert('RGB')
 
-            ])
-            ax.imshow(np.transpose(ts(im), (1, 2, 0)))
-            # ax.imshow(np.transpose(im, (1, 2, 0)))
+        im = np.asarray(im)
+        ax = fig.add_subplot(2, 5, i + 1)
+        ax.imshow(im)
 
-            # Create a Rectangle patch
-            print(test_image_box[i].split(' '))
-            # rect = patches.Rectangle((x,y), w,h, linewidth=1, edgecolor='r', facecolor='none')
+        dimentions = test_image_box[i].split(' ')
+        dimentions = list(map(float,dimentions))
+        x, y, w, h = dimentions
+        rect_pred = patches.Rectangle((x, y), w, h, linewidth=1, edgecolor='r',
+                                 facecolor='none')
+        rect_original = patches.Rectangle((x-10, y-10), w-10, h-10, linewidth=1, edgecolor='g',
+                                      facecolor='none')
 
-            # Add the patch to the Axes
-            # ax.add_patch(rect)
+        # Add the patch to the Axes
+        ax.add_patch(rect_pred)
+        ax.add_patch(rect_original)
 
     plt.show()
 
@@ -75,13 +77,18 @@ test_dataset = ILOTestDataset()
 test_dataloader = torch.utils.data.DataLoader(
     test_dataset, batch_size=1, num_workers=10
 )
+
+
 # testing the dataloader
-batch, im_size = next(iter(test_dataloader))
-images = batch
 
-output = model(images)
+def test_initialization():
+    batch, im_size = next(iter(test_dataloader))
+    images = batch
 
-reversed_box = Util.box_transform_inv(output, im_size)
+    model = load_model()
+    output = model(images)
+
+    reversed_box = Util.box_transform_inv(output, im_size)
 
 
 def test_network(model):
@@ -104,4 +111,7 @@ def test_network(model):
 
 
 # test_network(model)
+# model = load_model()
+# test_network(model)
+
 test_single_image()
