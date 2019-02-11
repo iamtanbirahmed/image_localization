@@ -5,6 +5,7 @@ import torch.nn as nn
 from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms, models
+import matplotlib.pyplot as plt
 
 import data.utils as Utils
 
@@ -53,13 +54,40 @@ batch = next(iter(train_dataloader))
 images, boxes, im_size = batch
 
 
+def plot_result():
+    with open('./data/accuracy.txt') as f:
+        accuracy = [list(map(float, l.split(' '))) for l in f.read().splitlines()]
+    with open('./data/loss.txt') as f:
+        loss = [list(map(float, l.split(' '))) for l in f.read().splitlines()]
+    x_batches = [item[0] for item in accuracy]
+    y_accuracy = [item[1] for item in accuracy]
+
+    x_loss_batches = [item[0] for item in loss]
+    y_loss = [item[1] for item in loss]
+
+    plt.subplot(2, 1, 1)
+    plt.plot(x_batches, y_accuracy,'g')
+    plt.xlabel('Batch')
+    plt.ylabel('Accuracy')
+
+    plt.subplot(2, 1, 2)
+    plt.plot(x_loss_batches,y_loss,'r')
+    plt.xlabel('Batch')
+    plt.ylabel('loss')
+    plt.show()
+    # x_batches = [x for x in results.split(' ')[:,0]]
+
+
 def train_network(model):
     EPOCHS = 20
     running_loss = 0.0
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
     loss_func = nn.SmoothL1Loss()  ## the loss function
-
+    f_acc = open('./data/accuracy.txt', 'w')
+    f_loss = open('./data/loss.txt', 'w')
+    j = 0
     for epoch in range(EPOCHS):
+
         bar = progressbar.ProgressBar()
         max_acc = 0
         max_acc_over_all_epoc = 0
@@ -80,12 +108,16 @@ def train_network(model):
             if acc > max_acc:
                 max_acc = acc
             print("Epoch {}/{} of {}, Loss: {:.3f}, Accuracy: {:.3f}".format(i, epoch + 1, EPOCHS, loss.item(), acc))
-
+            f_acc.write(str(j) + ' ' + str(acc.detach().numpy()) + '\n')
+            f_loss.write(str(j) + ' ' + str(loss.item()) + '\n')
+            j = j + 1
         print("Epoch {}/{}, Max Accuracy: {:.3f}".format(epoch + 1, EPOCHS, max_acc))
         if max_acc > max_acc_over_all_epoc:
             max_acc_over_all_epoc = max_acc
 
     print('Finished Training. Maximum Accuracy:{}'.format(max_acc_over_all_epoc))
+    f_acc.close()
+    f_loss.close()
     return model
 
 
@@ -94,9 +126,10 @@ def train_network(model):
 
 model = models.resnet18(pretrained=True)
 
-fc_in_size = model.fc.in_features
-model.fc = nn.Linear(fc_in_size, 4)
-model = train_network(model)
+# fc_in_size = model.fc.in_features
+# model.fc = nn.Linear(fc_in_size, 4)
+# model = train_network(model)
+#
+# torch.save(model, 'model.pt')
 
-torch.save(model,'model.pt')
-
+plot_result()

@@ -48,7 +48,7 @@ def test_single_image():
     with open('./data/test_boxes.txt') as f:
         test_image_box = [l.strip() for l in f.read().splitlines()]
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=(20, 20))
 
     for i in range(10):
         # fig, ax = plt.subplots(1)
@@ -110,8 +110,7 @@ def test_network(model):
     return model
 
 
-# test_network(model)
-# model = load_model()
-# test_network(model)
+model = load_model()
+test_network(model)
 
 test_single_image()
