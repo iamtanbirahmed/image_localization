@@ -63,7 +63,7 @@ images, boxes, im_size = batch
 
 
 def train_network(model):
-    EPOCHS = 1
+    EPOCHS = 20
     running_loss = 0.0
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
     loss_func = nn.SmoothL1Loss()  ## the loss function

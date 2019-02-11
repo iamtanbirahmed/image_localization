@@ -39,25 +39,34 @@ class ILOTestDataset(Dataset):
 
 
 def test_single_image():
-    # 31.1151, 67.1595, 219.5780, 266.6911
-    fig, ax = plt.subplots(1)
+    # 88.81446   60.741096 157.93982  257.19263
+    # 114.18105 57.434986 259.98145 270.80618
+    #137.60233 71.958336 242.84622 280.39297
+    with open('./data/test_images.txt') as f:
+        test_image_path = [l.trim() for l in f.read().splitlines()]
+    with open('./data/test_boxes.txt') as f:
+        test_image_box = [l.trim() for l in f.read().splitlines()]
 
-    im = Image.open('./data/images/' + '001.Black_footed_Albatross/Black_Footed_Albatross_0014_89.jpg').convert('RGB')
+    if len(test_image_box) == len(test_image_path):
+        for i in range(10):
 
-    ts = transforms.Compose([
-        transforms.Scale((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+            fig, ax = plt.subplots(1)
+            im = Image.open('./data/images/' + test_image_path[i]).convert('RGB')
+            ts = transforms.Compose([
+                # transforms.Scale((224, 224)),
+                transforms.ToTensor(),
+                # transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 
-    ])
-    ax.imshow(np.transpose(ts(im), (1, 2, 0)))
-    # ax.imshow(np.transpose(im, (1, 2, 0)))
+            ])
+            ax.imshow(np.transpose(ts(im), (1, 2, 0)))
+            # ax.imshow(np.transpose(im, (1, 2, 0)))
 
-    # Create a Rectangle patch
-    rect = patches.Rectangle((31.1151, 67.1595), 219.5780, 266.6911, linewidth=1, edgecolor='r', facecolor='none')
+            # Create a Rectangle patch
+            print(test_image_box[i].split(' '))
+            # rect = patches.Rectangle((x,y), w,h, linewidth=1, edgecolor='r', facecolor='none')
 
-    # Add the patch to the Axes
-    ax.add_patch(rect)
+            # Add the patch to the Axes
+            # ax.add_patch(rect)
 
     plt.show()
 
@@ -67,35 +76,32 @@ test_dataloader = torch.utils.data.DataLoader(
     test_dataset, batch_size=1, num_workers=10
 )
 # testing the dataloader
-batch , im_size = next(iter(test_dataloader))
+batch, im_size = next(iter(test_dataloader))
 images = batch
 
 output = model(images)
 
-reversed_box = Util.box_transform_inv(output,im_size)
-
-
+reversed_box = Util.box_transform_inv(output, im_size)
 
 
 def test_network(model):
-    results = np.empty()
     FILE_NAME = './data/test_boxes.txt'
-    f = open('./data/test_boxes.txt','w')
+    f = open(FILE_NAME, 'w')
     EPOCHS = 1
     for epoch in range(EPOCHS):
         for i, data in enumerate(test_dataloader, 0):
             images, im_size = data
             inputs = images
             outputs = model(inputs)
-            outputs = Util.box_transform_inv(outputs,im_size)
+            outputs = Util.box_transform_inv(outputs, im_size)
+            outputs = outputs.detach().numpy()[0]
+            for value in outputs:
+                f.write(str(value) + ' ')
+            f.write('\n')
 
-            # outputs = outputs.detach().numpy()
-            np.append(results,outputs)
-
-    np.savetxt(FILE_NAME, results, fmt="%.5f")
     print('Finished Testing')
-    f.close()
     return model
 
 
-test_network(model)
+# test_network(model)
+test_single_image()
