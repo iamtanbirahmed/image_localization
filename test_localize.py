@@ -6,12 +6,12 @@ from matplotlib import patches
 from torch.utils.data import Dataset
 from torchvision.transforms import transforms
 
-import data.utils as Util
+import utils as Util
 
 
 def load_model():
-    model = torch.load('model.pt')
-    return model
+    image_localization_model = torch.load('model.pt')
+    return image_localization_model
 
 
 class ILOTestDataset(Dataset):
@@ -43,32 +43,42 @@ def test_single_image():
     # 88.81446   60.741096 157.93982  257.19263
     # 114.18105 57.434986 259.98145 270.80618
     # 137.60233 71.958336 242.84622 280.39297
+
+    def nearest_square_numebr(limit=111):
+        answer = 0
+        while (answer + 1) ** 2 < limit:
+            answer += 1
+        return answer ** 2
+
     with open('./data/test_images.txt') as f:
         test_image_path = [l.strip() for l in f.read().splitlines()]
-    with open('./data/test_boxes.txt') as f:
+    with open('output.txt') as f:
         test_image_box = [l.strip() for l in f.read().splitlines()]
 
     fig = plt.figure(figsize=(20, 20))
 
-    for i in range(10):
+    total_test_image = len(test_image_path)
+    square_matrix_dimention = np.math.sqrt(nearest_square_numebr(total_test_image)) + 1
+
+    for i in range(total_test_image):
         # fig, ax = plt.subplots(1)
         im = Image.open('./data/images/' + test_image_path[i]).convert('RGB')
 
         im = np.asarray(im)
-        ax = fig.add_subplot(2, 5, i + 1)
+        ax = fig.add_subplot(square_matrix_dimention, square_matrix_dimention, i + 1)
         ax.imshow(im)
 
         dimentions = test_image_box[i].split(' ')
-        dimentions = list(map(float,dimentions))
+        dimentions = list(map(float, dimentions))
         x, y, w, h = dimentions
         rect_pred = patches.Rectangle((x, y), w, h, linewidth=1, edgecolor='r',
-                                 facecolor='none')
-        rect_original = patches.Rectangle((x-10, y-10), w-10, h-10, linewidth=1, edgecolor='g',
                                       facecolor='none')
+        # rect_original = patches.Rectangle((x - 10, y - 10), w - 10, h - 10, linewidth=1, edgecolor='g',
+        #                                   facecolor='none')
 
         # Add the patch to the Axes
         ax.add_patch(rect_pred)
-        ax.add_patch(rect_original)
+        # ax.add_patch(rect_original)
 
     plt.show()
 
@@ -92,7 +102,7 @@ def test_initialization():
 
 
 def test_network(model):
-    FILE_NAME = './data/test_boxes.txt'
+    FILE_NAME = 'output.txt'
     f = open(FILE_NAME, 'w')
     EPOCHS = 1
     for epoch in range(EPOCHS):
